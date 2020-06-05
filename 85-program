@@ -1,0 +1,5 @@
+rm -f rainbow-id.bin rainbow-id.hex
+avr-gcc -Wall -g -Os -mmcu=attiny85 -o rainbow-id.bin rainbow-id.c
+avr-size -C rainbow-id.bin 
+avr-objcopy -j .text -j .data -O ihex rainbow-id.bin rainbow-id.hex
+sudo avrdude -p attiny85 -c stk500 -U flash:w:rainbow-id.hex:i -F -P /dev/ttyUSB0
