@@ -295,6 +295,8 @@ main (void)
       pcin = in_buf;
       // memset(in_buf, 0, sizeof(in_buf));
       just_blink (in_buf, in_buf_eod);
+      DDRB &= ~0x7;
+      PORTB &= ~0xf;
       while (1)
 	{
 	  unsigned char acc = recvbyte ();
