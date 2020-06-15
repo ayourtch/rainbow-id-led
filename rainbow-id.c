@@ -162,27 +162,31 @@ recvbyte_inv ()
     {
       bitdelay ();
       acc = acc >> 1;
-      PSETX;
-      PCLRX;
       if (PINB & 0b10000)
 	{
+      // PSETX;
+      PCLRX;
 	  acc |= 0;
 	}
       else
 	{
+      // PCLRX;
+      PSETX;
 	  acc |= 0x80;
 	}
     }
+  PSETX;
   return acc;
 }
 
 void
 just_blink (char *start, char *end)
 {
+  DDRB |= 0b1111;
   while (1)
     {
-      int i;
-      unsigned int value = 0;
+      unsigned long i;
+      unsigned long value = 0;
       char *pc = start;
       char is_digit = 0;
       while (pc < end) {
