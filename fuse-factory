@@ -1,0 +1,5 @@
+avrdude: safemode: lfuse reads as 62
+avrdude: safemode: hfuse reads as DF
+avrdude: safemode: efuse reads as FF
+
+
