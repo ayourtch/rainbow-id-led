@@ -1,0 +1,1 @@
+sudo avrdude -p attiny45 -c stk500 -P /dev/ttyUSB0 -U lfuse:w:0x62:m 
