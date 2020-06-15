@@ -30,44 +30,58 @@
 #define PSETX do { PORTB |= 0b1000; } while (0)
 #define PCLRX do { PORTB &= ~0b1000; } while (0)
 
+// 8113 #define BITDELAY_APPROX 152
+
+// 13179 #define BITDELAY_APPROX 145
+// 8213 #define BITDELAY_APPROX 150
+
+// 8324 #define BITDELAY_APPROX 148
+// 8447 #define BITDELAY_APPROX 146
+// 8686 #define BITDELAY_APPROX 142
+// 8918 #define BITDELAY_APPROX 138
+// 9248 #define BITDELAY_APPROX 133
+// 9512 #define BITDELAY_APPROX 129
+
+//sending values
+//#define BITDELAY_APPROX 128
+//#define HALFBITDELAY_APPROX  64
+#define BITDELAY_APPROX 128
+#define HALFBITDELAY_APPROX  60
+
+static int curr_bitdelay = 100;
+static int curr_halfbitdelay = 100;
 static inline void
 bitdelay ()
 {
-  int i;
-  for (i = 0; i < 6; i++)
+  long int i;
+  long int cnt0 = 0;
+  long int cnt1 = 0;
+  for (i = 0; i < curr_bitdelay; i++)
     {
-      asm ("nop");
-      asm ("nop");
-      asm ("nop");
-      asm ("nop");
-      asm ("nop");
-      asm ("nop");
-      asm ("nop");
+      if (PINB & 0b10000) {
+        cnt1++;
+      } else {
+        cnt0++;
+      }
       asm ("nop");
     }
-  asm ("nop");
-  asm ("nop");
-  asm ("nop");
 }
 
 static inline void
 half_bitdelay ()
 {
-  int i;
-  for (i = 0; i < 3; i++)
+  long int i;
+  long int cnt0 = 0;
+  long int cnt1 = 0;
+  for (i = 0; i < curr_halfbitdelay; i++)
     {
-      asm ("nop");
-      asm ("nop");
-      asm ("nop");
-      asm ("nop");
-      asm ("nop");
-      asm ("nop");
-      asm ("nop");
+      if (PINB & 0b10000) {
+        cnt1++;
+      } else {
+        cnt0++;
+      }
       asm ("nop");
     }
-  asm ("nop");
-  asm ("nop");
-  asm ("nop");
 }
 
 void
@@ -151,7 +165,7 @@ recvbyte_inv ()
 {
   unsigned char acc = 0;
   char i;
-  unsigned int timeout = 65535;
+  unsigned long int timeout = 655350;
   while ((0 == (PINB & 0b10000)) && (--timeout));	/* spin */
   if (timeout == 0) {
     return 0xff;
@@ -176,6 +190,7 @@ recvbyte_inv ()
 	}
     }
   PSETX;
+  bitdelay ();
   return acc;
 }
 
@@ -195,7 +210,7 @@ just_blink (char *start, char *end)
           case 'G': { PORTB |= 0b0001; break; }
           case 'B': { PORTB |= 0b0010; break; }
           case 'X': { PORTB &= ~0b1111; break; }
-          case 'P': for (i = 0; i < value; i++) { if ((PINB & 0b10000)) { return; } }; break;
+          case 'P': for (i = 0; i < curr_bitdelay*value/10; i++) { if ((PINB & 0b10000)) { return; } }; break;
           case 'K': { if (is_digit) { value = 1000*value; }; break; }
           case '0': case '1': case '2': case '3': case '4':
           case '5': case '6': case '7': case '8': case '9': 
@@ -219,15 +234,19 @@ just_blink_n (int n)
 {
   while (1)
     {
-      int i;
+      long int i;
       PORTB = 0b1100;
-      for (i = 0; i < 10000; i++) { if ((PINB & 0b10000)) { return; } }
+      for (i = 0; i < 12800; i++) { if ((PINB & 0b10000)) { return; } }
+      PORTB = 0b0;
+      for (i = 0; i < 128000; i++) { if ((PINB & 0b10000)) { return; } }
       PORTB = 0b0010;
-      for (i = 0; i < 10000; i++) { if ((PINB & 0b10000)) { return; } }
+      for (i = 0; i < 12800; i++) { if ((PINB & 0b10000)) { return; } }
+      PORTB = 0b0;
+      for (i = 0; i < 128000; i++) { if ((PINB & 0b10000)) { return; } }
       PORTB = 0b0001;
-      for (i = 0; i < 10000; i++) { if ((PINB & 0b10000)) { return; } }
+      for (i = 0; i < 12800; i++) { if ((PINB & 0b10000)) { return; } }
       PORTB &= ~0b1111;
-      for (i = 0; i < 10000; i++) { if ((PINB & 0b10000)) { return; } }
+      for (i = 0; i < 128000; i++) { if ((PINB & 0b10000)) { return; } }
       if (n-- == 0) { return; };
     }
 }
@@ -262,6 +281,19 @@ repeater ()
 
 char *lead_string = "(ILED:";
 
+void test_send() {
+  while (1)
+    {
+      sendbyte (0xff);
+      bitdelay(); bitdelay(); bitdelay(); bitdelay(); bitdelay();
+      sendbyte (0x00);
+      bitdelay(); bitdelay(); bitdelay(); bitdelay(); bitdelay();
+      sendbyte (0xaa);
+      bitdelay(); bitdelay(); bitdelay(); bitdelay(); bitdelay();
+      sendbyte (0xaa);
+      bitdelay(); bitdelay(); bitdelay(); bitdelay(); bitdelay();
+    }
+}
 
 int
 main (void)
@@ -271,7 +303,10 @@ main (void)
 
   DDRB = 0b01111;
   PCLR;
-  just_blink_n(10);
+  just_blink_n(3);
+  curr_bitdelay = BITDELAY_APPROX;
+  curr_halfbitdelay = HALFBITDELAY_APPROX;
+  // test_send();
 
   // just_blink_fast();
   // repeater();
@@ -324,17 +359,11 @@ main (void)
 	      PCLRX;
 	      PSETX;
 	      PCLRX;
+	      PSETX;
 	      pc = curr_expect;
 	    }
 	}
     }
 
-  while (1)
-    {
-      sendbyte (0xff);
-      sendbyte (0x00);
-      sendbyte (0xaa);
-      sendbyte (0xaa);
-    }
 
 }
