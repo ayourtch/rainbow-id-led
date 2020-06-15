@@ -27,8 +27,8 @@
 #define PSETLEDG do { PORTB |= 0b00001; } while (0)
 #define PCLRLEDG do { PORTB &= ~0b00001; } while (0)
 
-#define PSETX do { PORTB |= 0b100; } while (0)
-#define PCLRX do { PORTB &= ~0b100; } while (0)
+#define PSETX do { PORTB |= 0b1000; } while (0)
+#define PCLRX do { PORTB &= ~0b1000; } while (0)
 
 static inline void
 bitdelay ()
