@@ -194,7 +194,7 @@ just_blink (char *start, char *end)
           case 'R': { PORTB |= 0b1100; break; }
           case 'G': { PORTB |= 0b0001; break; }
           case 'B': { PORTB |= 0b0010; break; }
-          case 'X': { PORTB &= ~0b1011; break; }
+          case 'X': { PORTB &= ~0b1111; break; }
           case 'P': for (i = 0; i < value; i++) { if ((PINB & 0b10000)) { return; } }; break;
           case 'K': { if (is_digit) { value = 1000*value; }; break; }
           case '0': case '1': case '2': case '3': case '4':
