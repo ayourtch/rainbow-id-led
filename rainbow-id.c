@@ -281,6 +281,15 @@ main (void)
   char *pcin;
   char *in_buf_eod = in_buf;
   char *pcin_end = in_buf+sizeof(in_buf)-1;
+/*
+
+#define STR "XRGB2KPX2KP"
+  memcpy(in_buf, STR, strlen(STR)+1);
+  in_buf_eod = in_buf + strlen(STR);
+
+*/
+
+
   while (1)
     {
       pcin = in_buf;
