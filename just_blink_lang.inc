@@ -23,7 +23,6 @@ unsigned long get_arg(uint8_t n)
 
 
 
-
 void
 just_blink (char *start, char *end)
 {
@@ -45,9 +44,9 @@ just_blink (char *start, char *end)
           case 'G': { just_blink_G(); break; }
           case 'B': { just_blink_B(); break; }
           case 'X': { just_blink_X(); break; }
-          case '$': { value = get_arg(value); }
-          case '>': { push_arg(value); }
-          case '<': { pop_arg(); }
+          case '$': { value = get_arg(value); break; }
+          case '>': { push_arg(value); break; }
+          case '<': { value = pop_arg(); break; }
           case 'P': { if (just_blink_P()) { return; } break; }
           case 'K': { if (was_digit) { value = 1000*value; }; break; }
           case '0': case '1': case '2': case '3': case '4':
