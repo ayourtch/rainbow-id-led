@@ -194,7 +194,7 @@ recvbyte_inv ()
   return acc;
 }
 
-unsigned long value = 0;
+static unsigned long value = 0;
 
 void just_blink_INIT(void) {
    DDRB |= 0b1111;
@@ -216,18 +216,18 @@ void just_blink_X(void) {
    PORTB &= ~0b1111;
 }
 
-char just_blink_P(void) {
+static inline just_blink_P(void) {
   unsigned long i;
   for (i = 0; i < curr_bitdelay*value/10; i++) { if ((PINB & 0b10000)) { return 1; } };
   return 0;
 }
 
 // true if we need to interrupt
-char just_blink_INT(void) {
+static inline just_blink_INT(void) {
   return (PINB & 0b10000);
 }
 
-char just_blink_INT_ITER(void) {
+static inline just_blink_INT_ITER(void) {
   return (PINB & 0b10000);
 }
 
