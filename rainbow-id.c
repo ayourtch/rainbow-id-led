@@ -196,23 +196,23 @@ recvbyte_inv ()
 
 static unsigned long value = 0;
 
-void just_blink_INIT(void) {
+void inline just_blink_INIT(void) {
    DDRB |= 0b1111;
 }
 
-void just_blink_R(void) {
+void inline just_blink_R(void) {
    PORTB |= 0b1100;
 }
 
-void just_blink_G(void) {
+void inline just_blink_G(void) {
    PORTB |= 0b0001;
 }
 
-void just_blink_B(void) {
+void inline just_blink_B(void) {
    PORTB |= 0b0010;
 }
 
-void just_blink_X(void) {
+void inline just_blink_X(void) {
    PORTB &= ~0b1111;
 }
 
@@ -304,7 +304,7 @@ int
 main (void)
 {
 
-  char in_buf[200];
+  char in_buf[100];
 
   DDRB = 0b01111;
   PCLR;
