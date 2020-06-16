@@ -27,7 +27,7 @@ unsigned long get_arg(uint8_t n)
 void
 just_blink (char *start, char *end)
 {
-  DDRB |= 0b1111;
+  just_blink_INIT();
   while (1)
     {
       char *pc = start;
@@ -63,6 +63,6 @@ just_blink (char *start, char *end)
         if (just_blink_INT()) { return; }
         pc++;
       }
-      if (just_blink_INT()) { return; }
+      if (just_blink_INT_ITER()) { return; }
     }
 }

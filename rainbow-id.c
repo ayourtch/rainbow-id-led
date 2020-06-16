@@ -196,6 +196,10 @@ recvbyte_inv ()
 
 unsigned long value = 0;
 
+void just_blink_INIT(void) {
+   DDRB |= 0b1111;
+}
+
 void just_blink_R(void) {
    PORTB |= 0b1100;
 }
@@ -220,6 +224,10 @@ char just_blink_P(void) {
 
 // true if we need to interrupt
 char just_blink_INT(void) {
+  return (PINB & 0b10000);
+}
+
+char just_blink_INT_ITER(void) {
   return (PINB & 0b10000);
 }
 
