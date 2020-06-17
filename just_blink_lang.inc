@@ -33,7 +33,13 @@ just_blink (char *start, char *end)
       char is_digit = 0;
       char was_digit = 0;
       char in_digit = 0;
+      char in_scan = 0;
+      arg_stack_first_free = 0;
       while (pc < end) {
+        if (in_scan && (*pc != '!')) {
+          pc++;
+          continue;
+        }
         was_digit = is_digit;
         is_digit = (*pc >= '0') && (*pc <= '9');
         if ((!is_digit && *pc != 'K') && in_digit) {
@@ -44,6 +50,35 @@ just_blink (char *start, char *end)
           case 'G': { just_blink_G(); break; }
           case 'B': { just_blink_B(); break; }
           case 'X': { just_blink_X(); break; }
+
+          /* define/end the subroutine */
+          case '!': {
+                      if (in_scan) {
+                        if (get_arg(0) == pc-start) {
+                          /* !! means end of definitions, start running */
+                          in_scan = 0;
+                          pop_arg();
+                        } else {
+                          /* define the next subroutine and keep going */
+                          push_arg(1+pc-start);
+                        }
+                      } else {
+                        if (arg_stack_first_free > 0) {
+                          /* if there is stuff on stack, this means return */
+                          unsigned long rv = pop_arg();
+                          pc = start + rv;
+                          continue;
+                        } else {
+                          /* running and nothing on stack - jump into definition mode */
+                          /* the subroutine code starts from the next symbol */
+                          push_arg(1+pc-start);
+                          in_scan = 1;
+                        }
+                      }
+                      break;
+                    }
+          /* call the subroutine */
+          case 'C': { push_arg(pc-start+1); pc = arg_stack[value] + start; continue; break; }
           case '$': { value = get_arg(value); break; }
           case '>': { push_arg(value); break; }
           case '<': { value = pop_arg(); break; }
