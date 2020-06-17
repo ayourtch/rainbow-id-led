@@ -36,8 +36,16 @@ char just_blink_INT(void) {
   return 0;
 }
 
+static int count = 3;
+
 char just_blink_INT_ITER(void) {
-  return 1;
+ printf("END LOOP, count: %d\n", count);
+ if (--count > 0) {
+   return 0;
+ } else {
+   return 1; // return 1;
+ }
+
 }
 
 #include "just_blink_lang.inc"
