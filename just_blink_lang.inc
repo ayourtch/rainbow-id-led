@@ -21,6 +21,13 @@ unsigned long get_arg(uint8_t n)
   return arg_stack_first_free > n ? arg_stack[arg_stack_first_free-1-n] : 0;
 }
 
+void set_arg(uint8_t n, unsigned long value)
+{
+  if (n < arg_stack_first_free) {
+    arg_stack[arg_stack_first_free-1-n] = value;
+  }
+}
+
 
 
 void
@@ -43,6 +50,7 @@ just_blink (char *start, char *end)
         was_digit = is_digit;
         is_digit = (*pc >= '0') && (*pc <= '9');
         if ((!is_digit && *pc != 'K') && in_digit) {
+          push_arg(value);
           in_digit = 0;
         }
         switch (*pc) {
@@ -77,12 +85,43 @@ just_blink (char *start, char *end)
                       }
                       break;
                     }
+          /* return if value is 0 */
+
+          /* push the current address and keep going */
+          case '{': { push_arg(pc-start); break; }
+          /* pop top, pop the address and go to it if the top value is not zero */
+          case '}': { if (pop_arg() != 0) { pc = start + pop_arg(); continue; } else { pop_arg(); } break; }
+
+          /* arithmetic and logical ops */
+          case '-': { value = pop_arg(); value = pop_arg() - value; push_arg(value); break; }
+          case '+': { value = pop_arg(); value = pop_arg() + value; push_arg(value); break; }
+          case '*': { value = pop_arg(); value = pop_arg() * value; push_arg(value); break; }
+          /* avoid the uncomfortable division by zero */
+          case '/': { value = pop_arg(); value = pop_arg() / (value == 0 ? 1 : value); push_arg(value); break; }
+          case '%': { value = pop_arg(); value = pop_arg() % (value == 0 ? 1 : value); push_arg(value); break; }
+          case '|': { value = pop_arg(); value = pop_arg() | value; push_arg(value); break; }
+          case '&': { value = pop_arg(); value = pop_arg() & value; push_arg(value); break; }
+          case '^': { value = pop_arg(); value = pop_arg() ^ value; push_arg(value); break; }
+          case '~': { value = pop_arg(); push_arg(~value); break; }
+
           /* call the subroutine */
-          case 'C': { push_arg(pc-start+1); pc = arg_stack[value] + start; continue; break; }
-          case '$': { value = get_arg(value); break; }
-          case '>': { push_arg(value); break; }
-          case '<': { value = pop_arg(); break; }
-          case 'P': { if (just_blink_P()) { return; } break; }
+          case 'C': { value = pop_arg(); push_arg(pc-start+1); pc = arg_stack[value] + start; continue; break; }
+
+          /* explicit stack operations */
+          case ',': { push_arg(value); break; }
+          case '.': { value = pop_arg(); break; }
+
+          /* direct load. To make it indirect, just use twice */
+          case '$': { value = pop_arg(); push_arg(get_arg(value)); break; }
+          /* indirect store - pop the top value and store it into value-th arg */
+          case '@': { value = pop_arg(); set_arg(value, pop_arg()); break; }
+
+          case 'P': { value = pop_arg(); if (just_blink_P()) { return; } break; }
+/*
+          case 'S': { int i; printf("STACK(at %d): ", pc-start);
+                      for (i=0; i<arg_stack_first_free; i++) { printf(" %lu", arg_stack[i]); }
+                      printf("\n"); break; }
+*/
           case 'K': { if (was_digit) { value = 1000*value; }; break; }
           case '0': case '1': case '2': case '3': case '4':
           case '5': case '6': case '7': case '8': case '9': 
