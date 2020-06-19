@@ -14,21 +14,25 @@
 #define set_input(portdir,pin) portdir&= ~(1<<pin)
 #define set_output(portdir,pin) portdir |= (1<<pin)
 
-// static int is_running = 0;
 
-// Outputs are:
+#if HW_TINY
+
+#define PSET do { PORTB |=   0b10000000; } while (0)
+#define PCLR do { PORTB &=  ~0b10000000; } while (0)
+
+#define PSETX do { PORTB |=  0b10000000; } while (0)
+#define PCLRX do { PORTB &= ~0b10000000; } while (0)
+
+#else
 
 #define PSET do { PORTB |= 0b01000; } while (0)
 #define PCLR do { PORTB &= ~0b01000; } while (0)
 
-#define PSETLED do { PORTB |= 0b01010; } while (0)
-#define PCLRLED do { PORTB &= ~0b01010; } while (0)
-
-#define PSETLEDG do { PORTB |= 0b00001; } while (0)
-#define PCLRLEDG do { PORTB &= ~0b00001; } while (0)
-
 #define PSETX do { PORTB |= 0b1000; } while (0)
 #define PCLRX do { PORTB &= ~0b1000; } while (0)
+
+#endif
+
 
 // 8113 #define BITDELAY_APPROX 152
 
@@ -201,11 +205,22 @@ void inline just_blink_INIT(void) {
 }
 
 void inline just_blink_R(void) {
+#if HW_TINY
+   PORTB |= 0b0001;
+#elif  HW_SQUARE
    PORTB |= 0b1100;
+#elif  HW_BIG
+#else
+#error need to define hardware type HW_TINY, HW_SQUARE or HW_BIG
+#endif
 }
 
 void inline just_blink_G(void) {
+#ifdef HW_TINY
+   PORTB |= 0b1000;
+#else
    PORTB |= 0b0001;
+#endif
 }
 
 void inline just_blink_B(void) {
