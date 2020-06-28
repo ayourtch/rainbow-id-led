@@ -28,8 +28,8 @@
 #define PSET do { PORTB |= 0b01000; } while (0)
 #define PCLR do { PORTB &= ~0b01000; } while (0)
 
-#define PSETX do { PORTB |= 0b1000; } while (0)
-#define PCLRX do { PORTB &= ~0b1000; } while (0)
+#define PSETX do { PORTB |= 0b10000000; } while (0)
+#define PCLRX do { PORTB &= ~0b10000000; } while (0)
 
 #endif
 
@@ -53,6 +53,7 @@
 #define HALFBITDELAY_APPROX  60
 
 static int curr_bitdelay = 100;
+static int curr_send_bitdelay = 140;
 static int curr_halfbitdelay = 100;
 static inline void
 bitdelay ()
@@ -67,6 +68,27 @@ bitdelay ()
       } else {
         cnt0++;
       }
+      asm ("nop");
+    }
+}
+
+static inline void
+send_bitdelay ()
+{
+  long int i;
+  long int cnt0 = 0;
+  long int cnt1 = 0;
+  for (i = 0; i < curr_send_bitdelay; i++)
+    {
+      if (PINB & 0b10000) {
+        cnt1++;
+      } else {
+        cnt0++;
+      }
+      asm ("nop");
+      asm ("nop");
+      asm ("nop");
+      asm ("nop");
       asm ("nop");
     }
 }
@@ -93,9 +115,11 @@ sendbyte (unsigned char c)
 {
   char i;
   PCLR;
-  bitdelay ();
+  send_bitdelay ();
   for (i = 0; i < 8; i++)
     {
+      PSETX;
+      PCLRX;
       if (c & 1)
 	{
 	  PSET;
@@ -104,23 +128,26 @@ sendbyte (unsigned char c)
 	{
 	  PCLR;
 	}
-      bitdelay ();
+      send_bitdelay ();
       c = c >> 1;
     }
   PSET;
-  bitdelay ();
+  send_bitdelay ();
   bitdelay ();
   bitdelay ();
 }
+
 
 void
 sendbyte_inv (unsigned char c)
 {
   char i;
   PSET;
-  bitdelay ();
+  send_bitdelay ();
   for (i = 0; i < 8; i++)
     {
+      PSETX;
+      PCLRX;
       if (c & 1)
 	{
 	  PCLR;
@@ -129,11 +156,11 @@ sendbyte_inv (unsigned char c)
 	{
 	  PSET;
 	}
-      bitdelay ();
+      send_bitdelay ();
       c = c >> 1;
     }
   PCLR;
-  bitdelay ();
+  send_bitdelay ();
   bitdelay ();
   bitdelay ();
 }
@@ -201,7 +228,7 @@ recvbyte_inv ()
 static unsigned long value = 0;
 
 void inline just_blink_INIT(void) {
-   DDRB |= 0b1111;
+   DDRB |= 0b0111;
 }
 
 void inline just_blink_R(void) {
@@ -255,19 +282,30 @@ just_blink_n (int n)
   while (1)
     {
       long int i;
-      PORTB = 0b1100;
-      for (i = 0; i < 12800; i++) { if ((PINB & 0b10000)) { return; } }
-      PORTB = 0b0;
-      for (i = 0; i < 128000; i++) { if ((PINB & 0b10000)) { return; } }
-      PORTB = 0b0010;
-      for (i = 0; i < 12800; i++) { if ((PINB & 0b10000)) { return; } }
-      PORTB = 0b0;
-      for (i = 0; i < 128000; i++) { if ((PINB & 0b10000)) { return; } }
-      PORTB = 0b0001;
-      for (i = 0; i < 12800; i++) { if ((PINB & 0b10000)) { return; } }
-      PORTB &= ~0b1111;
-      for (i = 0; i < 128000; i++) { if ((PINB & 0b10000)) { return; } }
-      if (n-- == 0) { return; };
+      just_blink_INIT();
+      value = 80000;
+      just_blink_X();
+      just_blink_P();
+
+      just_blink_X();
+      just_blink_R();
+      just_blink_P();
+
+      just_blink_X();
+      just_blink_G();
+      just_blink_P();
+
+      just_blink_X();
+      just_blink_B();
+      just_blink_P();
+
+      just_blink_X();
+      just_blink_R();
+      just_blink_G();
+      just_blink_B();
+      just_blink_P();
+
+      if (n-- == 0) { just_blink_X(); return; };
     }
 }
 
@@ -298,28 +336,66 @@ repeater ()
 
 
 #define recvbyte recvbyte_inv
+#define sendbyte sendbyte_inv
 
 char *lead_string = "(ILED:";
 
 void test_send() {
+  DDRB = 0b1111;
+  // PORTB = 0b1100;
+  int i;
   while (1)
     {
-      sendbyte (0xff);
-      bitdelay(); bitdelay(); bitdelay(); bitdelay(); bitdelay();
-      sendbyte (0x00);
-      bitdelay(); bitdelay(); bitdelay(); bitdelay(); bitdelay();
-      sendbyte (0xaa);
-      bitdelay(); bitdelay(); bitdelay(); bitdelay(); bitdelay();
-      sendbyte (0xaa);
-      bitdelay(); bitdelay(); bitdelay(); bitdelay(); bitdelay();
+      for(i=0;i<10;i++) { send_bitdelay();  }
+      sendbyte ('t');
+      for(i=0;i<10;i++) { send_bitdelay();  }
+      sendbyte ('e');
+      for(i=0;i<10;i++) { send_bitdelay();  }
+      sendbyte ('s');
+      for(i=0;i<10;i++) { send_bitdelay();  }
+      sendbyte ('t');
+      for(i=0;i<10;i++) { send_bitdelay();  }
+      sendbyte ('\r');
+      for(i=0;i<10000;i++) { send_bitdelay();  }
     }
+}
+
+void test_send2() {
+  int i;
+  for(;;) {
+    for (i=0; i<10000; i++) {
+      // pump
+      DDRB =  0b11111;
+      PORTB = 0b10001;
+      bitdelay();
+    // one
+      DDRB =  0b01111;
+      PORTB = 0b01001;
+      bitdelay();
+    }
+    for (i=0; i<10000; i++) {
+      // pump
+      DDRB =  0b11111;
+      PORTB = 0b10010;
+      bitdelay();
+    // one
+      DDRB =  0b10111;
+      PORTB = 0b00010;
+      bitdelay();
+    }
+  }
+
+
+
 }
 
 int
 main (void)
 {
 
-  char in_buf[100];
+  char in_buf[120];
+
+  /// test_send();
 
   DDRB = 0b01111;
   PCLR;
@@ -347,6 +423,7 @@ main (void)
 
   while (1)
     {
+      pc = curr_expect;
       pcin = in_buf;
       // memset(in_buf, 0, sizeof(in_buf));
       just_blink (in_buf, in_buf_eod);
@@ -384,6 +461,5 @@ main (void)
 	    }
 	}
     }
-
 
 }
